@@ -1,0 +1,49 @@
+# BO Châssis · pages d'arrivée (Apache, OVH)
+Options -Indexes
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+
+# Déploiement Git (OVH) : le dépôt est la racine du site. Jamais servir .git ni les fichiers Markdown.
+RedirectMatch 404 /\.git
+<FilesMatch "\.(md|gitignore)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # HTTPS
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # Accueil du sous-domaine
+  RewriteRule ^$ /chassis-bois/ [L,R=301]
+  # Barre oblique finale
+  RewriteRule ^(chassis-bois|portes-entree|portes-interieures|merci)$ /$1/ [L,R=301]
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType font/woff2 .woff2
+  AddType video/mp4 .mp4
+  AddType application/manifest+json .webmanifest
+  AddCharset utf-8 .html .css .js .xml .txt .webmanifest
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/xml application/javascript text/javascript application/json application/ld+json application/manifest+json image/svg+xml
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  # Fichiers versionnés (nom unique) : cache d'un an
+  <FilesMatch "\.(css|js|webp|jpg|png|woff2|mp4)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(html|xml|txt|webmanifest)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
